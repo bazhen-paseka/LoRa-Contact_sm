@@ -24,7 +24,7 @@
 *							LOCAL DEFINES
 **************************************************************************
 */
-
+	#define	TX_TIME		1000
 
 /*
 **************************************************************************
@@ -165,7 +165,7 @@ void LoRa_Contact_Main (void){
 			ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
 			sprintf(DataChar, "set Master: %d\r\n", ret );
 			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-			HAL_Delay(2500);
+			HAL_Delay(TX_TIME);
 
 			Command_button_pressed();
 			//LoraMain_TX();
@@ -173,8 +173,8 @@ void LoRa_Contact_Main (void){
 			ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
 			sprintf(DataChar, "set Slave: %d\r\n", ret );
 			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-			HAL_Delay(2500);
-			HAL_Delay(10000);
+			HAL_Delay(TX_TIME);
+			//HAL_Delay(10000);
 		}
 	} else {
 		LoraMain_RX();
@@ -244,6 +244,7 @@ void LoraMain_RX(void) {
 } //***************************************************************************
 
 void Slave_Answer(void){
+	HAL_Delay(1000);
 	sprintf(DataChar, "set master...\r\n" );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
@@ -275,6 +276,7 @@ void Slave_Answer(void){
 } //***************************************************************************
 
 void Command_button_pressed(void) {
+
 	if (ch1_u32 == 1 ) {
 		message_length = sprintf(buffer, "Box-1");
 		ret = SX1278_LoRaEntryTx(	&SX1278			,
@@ -291,7 +293,7 @@ void Command_button_pressed(void) {
 									2000				);
 		sprintf(DataChar, "trans: %d.\r\n", ret );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(2500);
+		HAL_Delay(TX_TIME);
 		ch1_u32 = 0 ;
 	}	//---------------------------------------------------------------------
 
@@ -311,7 +313,7 @@ void Command_button_pressed(void) {
 									2000				);
 		sprintf(DataChar, "trans: %d.\r\n", ret );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(2500);
+		HAL_Delay(TX_TIME);
 		ch2_u32 = 0 ;
 	}	//---------------------------------------------------------------------
 
@@ -331,7 +333,7 @@ void Command_button_pressed(void) {
 									2000				);
 		sprintf(DataChar, "trans: %d.\r\n", ret );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(2500);
+		HAL_Delay(TX_TIME);
 		ch3_u32 = 0 ;
 	}	//---------------------------------------------------------------------
 
@@ -351,7 +353,7 @@ void Command_button_pressed(void) {
 									2000				);
 		sprintf(DataChar, "trans: %d.\r\n", ret );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(2500);
+		HAL_Delay(TX_TIME);
 		ch4_u32 = 0 ;
 	}	//---------------------------------------------------------------------
 
@@ -371,7 +373,7 @@ void Command_button_pressed(void) {
 									2000				);
 		sprintf(DataChar, "trans: %d.\r\n", ret );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(2500);
+		HAL_Delay(TX_TIME);
 		ch5_u32 = 0 ;
 	} //---------------------------------------------------------------------
 } //***************************************************************************
