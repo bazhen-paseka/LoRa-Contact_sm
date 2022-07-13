@@ -157,18 +157,25 @@ void LoRa_Contact_Init (void){
 
 void LoRa_Contact_Main (void){
 	if (master == 1) {
-		ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
-		sprintf(DataChar, "set Master: %d, ", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(2500);
+		if (	(ch1_u32 == 1)
+			||	(ch2_u32 == 1)
+			||	(ch3_u32 == 1)
+			||	(ch4_u32 == 1)
+			||	(ch5_u32 == 1)) {
+			ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
+			sprintf(DataChar, "set Master: %d\r\n", ret );
+			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+			HAL_Delay(2500);
 
-		Command_button_pressed();
-		//LoraMain_TX();
-		HAL_Delay(10000);
-		ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
-		sprintf(DataChar, "set Slave: %d, ", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(2500);
+			Command_button_pressed();
+			//LoraMain_TX();
+
+			ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
+			sprintf(DataChar, "set Slave: %d\r\n", ret );
+			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+			HAL_Delay(2500);
+			HAL_Delay(10000);
+		}
 	} else {
 		LoraMain_RX();
 	}
