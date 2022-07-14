@@ -17,15 +17,13 @@
 	#include "main.h"
 	#include "spi.h"
 	#include "usart.h"
-	//#include "gpio.h"
 	#include "LoRa-Contact_SM.h"
 /*
 **************************************************************************
 *							LOCAL DEFINES
 **************************************************************************
 */
-	#define	TX_TIME		1000
-
+	#define	TX_TIME		500
 /*
 **************************************************************************
 *							LOCAL CONSTANTS
@@ -57,9 +55,10 @@
 *                       LOCAL FUNCTION PROTOTYPES
 **************************************************************************
 */
-	void Command_button_pressed (void) ;
+	void Command_button_pressed (int _box_number) ;
 	void LoraMain_TX(void) ;
 	void LoraMain_RX(void) ;
+	void LoraMaster_RX(void) ;
 	void Slave_Answer(void);
 /*
 **************************************************************************
@@ -79,11 +78,7 @@
 	int answer_cnt = 0 ;
 
 	char DataChar[0xFF];
-	volatile uint32_t ch1_u32 = 0;
-	volatile uint32_t ch2_u32 = 0;
-	volatile uint32_t ch3_u32 = 0;
-	volatile uint32_t ch4_u32 = 0;
-	volatile uint32_t ch5_u32 = 0;
+	volatile uint32_t ch_u32[5] = { 0 };
 /*
 **************************************************************************
 *                        LOCAL FUNCTION PROTOTYPES
@@ -157,32 +152,15 @@ void LoRa_Contact_Init (void){
 
 void LoRa_Contact_Main (void){
 	if (master == 1) {
-		if (	(ch1_u32 == 1)
-			||	(ch2_u32 == 1)
-			||	(ch3_u32 == 1)
-			||	(ch4_u32 == 1)
-			||	(ch5_u32 == 1)) {
-			ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
-			if ( ret==1 ) {
-				sprintf(DataChar, "set Master; " );
-				HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-			} else {
-				sprintf(DataChar, "Master set Failed\r\n" );
-				HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-			}
-
-			Command_button_pressed();
-			//LoraMain_TX();
-
-			ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
-			if ( ret==1 ) {
-				sprintf(DataChar, "set Slave.\r\n" );
-				HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-			} else {
-				sprintf(DataChar, "Slave set Failed\r\n" );
-				HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+		for (int box_number =0; box_number<5; box_number++) {
+			if (ch_u32[box_number] == 1) {
+				ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
+				Command_button_pressed(box_number);
+				//LoraMain_TX();
+				ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
 			}
 		}
+		LoraMaster_RX();
 	} else {
 		LoraMain_RX();
 	}
@@ -251,123 +229,49 @@ void LoraMain_RX(void) {
 
 void Slave_Answer(void){
 	ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);	// Master
-	message_length = sprintf(buffer, "BOX-%d", 5);
-	ret = SX1278_LoRaEntryTx(	&SX1278			,
-								message_length	,
-								2000			);
+	message_length = sprintf( buffer, "Confirm-%d", SLAVE_NUMBER);
+	ret = SX1278_LoRaEntryTx( &SX1278, message_length, 2000 ) ;
 
 	sprintf(DataChar, " \t Answer: \"%s\"\r\n", buffer );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-	ret = SX1278_LoRaTxPacket(	&SX1278				,
-								(uint8_t *) buffer	,
-								message_length		,
-								2000				);
+	ret = SX1278_LoRaTxPacket(	&SX1278, (uint8_t *) buffer, message_length, 2000 ) ;
 	ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);	// Slave
 } //***************************************************************************
 
-void Command_button_pressed(void) {
-
-	if (ch1_u32 == 1 ) {
-		message_length = sprintf(buffer, "Box-1");
-		ret = SX1278_LoRaEntryTx(	&SX1278			,
-									message_length	,
-									2000			);
-		sprintf(DataChar, "entry: %d, ", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-
-		sprintf(DataChar, "send: %s,", buffer );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		ret = SX1278_LoRaTxPacket(	&SX1278				,
-									(uint8_t *) buffer	,
-									message_length		,
-									2000				);
-		sprintf(DataChar, "trans: %d.\r\n", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(TX_TIME);
-		ch1_u32 = 0 ;
-	}	//---------------------------------------------------------------------
-
-	if (ch2_u32 == 1 ) {
-		message_length = sprintf(buffer, "Box-2");
-		ret = SX1278_LoRaEntryTx(	&SX1278			,
-									message_length	,
-									2000			);
-		sprintf(DataChar, "entry: %d, ", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-
-		sprintf(DataChar, "send: %s,", buffer );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		ret = SX1278_LoRaTxPacket(	&SX1278				,
-									(uint8_t *) buffer	,
-									message_length		,
-									2000				);
-		sprintf(DataChar, "trans: %d.\r\n", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(TX_TIME);
-		ch2_u32 = 0 ;
-	}	//---------------------------------------------------------------------
-
-	if (ch3_u32 == 1 ) {
-		message_length = sprintf(buffer, "BOX-3");
-		ret = SX1278_LoRaEntryTx(	&SX1278			,
-									message_length	,
-									2000			);
-		sprintf(DataChar, "entry: %d, ", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-
-		sprintf(DataChar, "send: %s, ", buffer );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		ret = SX1278_LoRaTxPacket(	&SX1278				,
-									(uint8_t *) buffer	,
-									message_length		,
-									2000				);
-		sprintf(DataChar, "trans: %d.\r\n", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(TX_TIME);
-		ch3_u32 = 0 ;
-	}	//---------------------------------------------------------------------
-
-	if (ch4_u32 == 1 ) {
-		message_length = sprintf(buffer, "BOX-4");
-		ret = SX1278_LoRaEntryTx(	&SX1278			,
-									message_length	,
-									2000			);
-		sprintf(DataChar, "entry: %d, ", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-
-		sprintf(DataChar, "send: %s, ", buffer );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		ret = SX1278_LoRaTxPacket(	&SX1278				,
-									(uint8_t *) buffer	,
-									message_length		,
-									2000				);
-		sprintf(DataChar, "trans: %d.\r\n", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(TX_TIME);
-		ch4_u32 = 0 ;
-	}	//---------------------------------------------------------------------
-
-	if (ch5_u32 == 1 ) {
-		message_length = sprintf(buffer, "Box-5");
-		ret = SX1278_LoRaEntryTx(	&SX1278			,
-									message_length	,
-									2000			);
-		sprintf(DataChar, "entry: %d, ", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-
-		sprintf(DataChar, "send: %s, ", buffer );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		ret = SX1278_LoRaTxPacket(	&SX1278				,
-									(uint8_t *) buffer	,
-									message_length		,
-									2000				);
-		sprintf(DataChar, "trans: %d.\r\n", ret );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		HAL_Delay(TX_TIME);
-		ch5_u32 = 0 ;
-	} //---------------------------------------------------------------------
+void Command_button_pressed(int _box_number) {
+	message_length = sprintf(buffer, "BOX-%d", _box_number );
+	ret = SX1278_LoRaEntryTx ( &SX1278, message_length, 2000 ) ;
+	ret = SX1278_LoRaTxPacket( &SX1278, (uint8_t *) buffer, message_length, 2000 ) ;
+	HAL_Delay(TX_TIME);
+	ch_u32[_box_number] = 0 ;
 } //***************************************************************************
 
+void LoraMaster_RX(void) {
+	ret = SX1278_LoRaRxPacket(&SX1278);
+	sprintf(DataChar, "MasterRx%d %d byte: ", SLAVE_NUMBER, ret );
+	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+	if (ret > 0) {
+		SX1278_read(&SX1278, (uint8_t *) buffer, ret);
+		sprintf(DataChar, "\t\"%s\"\r\n", buffer );
+		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//		if (buffer[4] == SLAVE_NUMBER + '0' ) {
+//			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+//		} else {
+//			sprintf(DataChar, "\r\n" );
+//			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+//			HAL_Delay(50);
+//			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+//		}
+	} else {
+		sprintf(DataChar, " \r\n" );
+		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+	}
+	HAL_Delay(500);
+} //***************************************************************************
 //***************************************************************************
 //***************************************************************************
 
