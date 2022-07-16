@@ -60,6 +60,7 @@
 	void LoraMain_RX(void) ;
 	void LoraMaster_RX(void) ;
 	void Slave_Answer(void);
+	void Get_UID_96bit(uint32_t *UID) ;
 /*
 **************************************************************************
 *						 LOCAL GLOBAL VARIABLES
@@ -109,7 +110,12 @@ void LoRa_Contact_Init (void){
 	HAL_UART_Transmit( &huart1, (uint8_t *)DataChar , strlen(DataChar) , 100 ) ;
 
 	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+
+	uint32_t UID[3] = { 0 };
+	Get_UID_96bit(UID); // Unique device ID register (96 bits)
+	sprintf(DataChar, "UID: %08lx %08lx %08lx\r\n", UID[0], UID[1], UID[2]);
+	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
 	master = MASTER ;
 	if (master == 1) {
@@ -287,6 +293,13 @@ void LoraMaster_RX(void) {
 	}
 	HAL_Delay(1000);
 } //***************************************************************************
-//***************************************************************************
+
+void Get_UID_96bit(uint32_t *UID) {	// Unique device ID register (96 bits)
+  UID[0] = (uint32_t)(READ_REG(*((uint32_t *)UID_BASE)));
+  UID[1] = (uint32_t)(READ_REG(*((uint32_t *)(UID_BASE + 4U))));
+  UID[2] = (uint32_t)(READ_REG(*((uint32_t *)(UID_BASE + 8U))));
+} //***************************************************************************
+
+
 //***************************************************************************
 
