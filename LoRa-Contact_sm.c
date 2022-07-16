@@ -254,6 +254,19 @@ void LoraMaster_RX(void) {
 		SX1278_read(&SX1278, (uint8_t *) buffer, ret);
 		sprintf(DataChar, "\t\"%s\"\r\n", buffer );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+		int beeper = buffer[8] - '0';
+		sprintf(DataChar, "Beeper=%d\r\n", beeper );
+		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+
+		for (int b=0; b<beeper; b++) {
+			HAL_GPIO_WritePin(BEEPER_GPIO_Port, BEEPER_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+			HAL_Delay(50);
+			HAL_GPIO_WritePin(BEEPER_GPIO_Port, BEEPER_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+			HAL_Delay(200);
+		}
+
 //		if (buffer[4] == SLAVE_NUMBER + '0' ) {
 //			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 //			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
