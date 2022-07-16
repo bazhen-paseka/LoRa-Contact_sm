@@ -17,6 +17,7 @@
 	#include "main.h"
 	#include "spi.h"
 	#include "usart.h"
+	#include "iwdg.h"
 	#include "LoRa-Contact_SM.h"
 /*
 **************************************************************************
@@ -156,11 +157,14 @@ void LoRa_Contact_Main (void){
 			Command_button_pressed(box_number);
 			//LoraMain_TX();
 			ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
+			HAL_IWDG_Refresh(&hiwdg);
 		}
 	}
 	LoraMaster_RX();
+	HAL_IWDG_Refresh(&hiwdg);
 #elif
 	LoraMain_RX();
+	HAL_IWDG_Refresh(&hiwdg);
 #endif
 } //***************************************************************************
 
