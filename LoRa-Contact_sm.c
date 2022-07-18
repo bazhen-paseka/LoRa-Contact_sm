@@ -17,6 +17,7 @@
 	#include "main.h"
 	#include "spi.h"
 	#include "usart.h"
+	#include "iwdg.h"
 	#include "LoRa-Contact_SM.h"
 /*
 **************************************************************************
@@ -60,6 +61,7 @@
 	void LoraMain_RX(void) ;
 	void LoraMaster_RX(void) ;
 	void Slave_Answer(void);
+	void Get_UID_96bit(uint32_t *UID) ;
 /*
 **************************************************************************
 *						 LOCAL GLOBAL VARIABLES
@@ -68,14 +70,10 @@
 	SX1278_hw_t SX1278_hw;
 	SX1278_t 	SX1278;
 
-	int master;
 	int ret;
-
 	char buffer[64];
-
 	int message;
 	int message_length;
-	int answer_cnt = 0 ;
 
 	char DataChar[0xFF];
 	volatile uint32_t ch_u32[5] = { 0 };
@@ -109,16 +107,12 @@ void LoRa_Contact_Init (void){
 	HAL_UART_Transmit( &huart1, (uint8_t *)DataChar , strlen(DataChar) , 100 ) ;
 
 	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 
-	master = MASTER ;
-	if (master == 1) {
-		sprintf(DataChar, "Mode: Master\r\n" );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-	} else {
-		sprintf(DataChar, "Mode: Slave\r\n" );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-	}
+	uint32_t UID[3] = { 0 };
+	Get_UID_96bit(UID); // Unique device ID register (96 bits)
+	sprintf(DataChar, "UID: %08lx %08lx %08lx\r\n", UID[0], UID[1], UID[2]);
+	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
 	//initialize LoRa module
 	SX1278_hw.dio0.port		= DIO0_GPIO_Port;
@@ -143,27 +137,35 @@ void LoRa_Contact_Init (void){
 	sprintf(DataChar, " done.\r\n" );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
-	if (master == 1) {
-		ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
-	} else {
-		ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
-	}
+#if (MASTER == 1)
+	ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
+	sprintf(DataChar, "mode Master=%d\r\n", ret);
+	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+#elif
+	ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
+	sprintf(DataChar, "mode Slave=%d\r\n", ret );
+	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+#endif
+
 } //***************************************************************************
 
 void LoRa_Contact_Main (void){
-	if (master == 1) {
-		for (int box_number =0; box_number<5; box_number++) {
-			if (ch_u32[box_number] == 1) {
-				ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
-				Command_button_pressed(box_number);
-				//LoraMain_TX();
-				ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
-			}
+#if MASTER == 1
+	for (int box_number = 0; box_number < SLAVE_QNT; box_number++) {
+		if (ch_u32[box_number] == 1) {
+			ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
+			Command_button_pressed(box_number);
+			//LoraMain_TX();
+			ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
+			HAL_IWDG_Refresh(&hiwdg);
 		}
-		LoraMaster_RX();
-	} else {
-		LoraMain_RX();
 	}
+	LoraMaster_RX();
+	HAL_IWDG_Refresh(&hiwdg);
+#elif
+	LoraMain_RX();
+	HAL_IWDG_Refresh(&hiwdg);
+#endif
 } //***************************************************************************
 
 /***************************************************************************
@@ -207,7 +209,7 @@ void LoraMain_RX(void) {
 		if (buffer[4] == SLAVE_NUMBER + '0' ) {
 			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-
+			HAL_Delay(1100);
 			Slave_Answer();
 		} else {
 			sprintf(DataChar, "\r\n" );
@@ -239,39 +241,49 @@ void Slave_Answer(void){
 } //***************************************************************************
 
 void Command_button_pressed(int _box_number) {
-	message_length = sprintf(buffer, "BOX-%d", _box_number );
+	message_length = sprintf(buffer, "BOX-%d", _box_number+1 );
 	ret = SX1278_LoRaEntryTx ( &SX1278, message_length, 2000 ) ;
 	ret = SX1278_LoRaTxPacket( &SX1278, (uint8_t *) buffer, message_length, 2000 ) ;
+	sprintf(DataChar, "send: %s\r\n", buffer );
+	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 	HAL_Delay(TX_TIME);
 	ch_u32[_box_number] = 0 ;
 } //***************************************************************************
 
 void LoraMaster_RX(void) {
+	int beeper = 0;
 	ret = SX1278_LoRaRxPacket(&SX1278);
-	sprintf(DataChar, "MasterRx%d %d byte: ", SLAVE_NUMBER, ret );
+	sprintf(DataChar, "MasterRx %d byte: ", ret );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 	if (ret > 0) {
 		SX1278_read(&SX1278, (uint8_t *) buffer, ret);
 		sprintf(DataChar, "\t\"%s\"\r\n", buffer );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-//		if (buffer[4] == SLAVE_NUMBER + '0' ) {
-//			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-//		} else {
-//			sprintf(DataChar, "\r\n" );
-//			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-//			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-//			HAL_Delay(50);
-//			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
-//		}
+		beeper = buffer[8] - '0';
+		sprintf(DataChar, "Beeper=%d\r\n", beeper );
+		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+
+		for (int b=0; b<beeper; b++) {
+			HAL_GPIO_WritePin(BEEPER_GPIO_Port, BEEPER_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+			HAL_Delay(50);
+			HAL_GPIO_WritePin(BEEPER_GPIO_Port, BEEPER_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+			HAL_Delay(200);
+		}
 	} else {
 		sprintf(DataChar, " \r\n" );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 	}
-	HAL_Delay(500);
+	HAL_Delay(1001-beeper*200);
 } //***************************************************************************
-//***************************************************************************
+
+void Get_UID_96bit(uint32_t *UID) {	// Unique device ID register (96 bits)
+  UID[0] = (uint32_t)(READ_REG(*((uint32_t *)UID_BASE)));
+  UID[1] = (uint32_t)(READ_REG(*((uint32_t *)(UID_BASE + 4U))));
+  UID[2] = (uint32_t)(READ_REG(*((uint32_t *)(UID_BASE + 8U))));
+} //***************************************************************************
+
+
 //***************************************************************************
 
