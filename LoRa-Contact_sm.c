@@ -18,6 +18,7 @@
 	#include "spi.h"
 	#include "usart.h"
 	#include "iwdg.h"
+	#include "rng.h"
 	#include "LoRa-Contact_SM.h"
 /*
 **************************************************************************
@@ -94,7 +95,7 @@ void LoRa_Contact_Init (void){
 	soft_version_arr_int[1] = ((SOFT_VERSION) /  10) %10 ;
 	soft_version_arr_int[2] = ((SOFT_VERSION)      ) %10 ;
 
-	sprintf(DataChar,"\r\n\r\n\tLoRa over sx1278 v%d.%d.%d \r\nUART1 for debug on speed 115200 \r\n",
+	sprintf(DataChar,"\r\n\r\n\tLoRa-Contact-L053 over sx1278 v%d.%d.%d \r\nUART1 for debug on speed 115200 \r\n",
 			soft_version_arr_int[0] ,
 			soft_version_arr_int[1] ,
 			soft_version_arr_int[2] ) ;
@@ -109,9 +110,13 @@ void LoRa_Contact_Init (void){
 	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 
-	uint32_t UID[3] = { 0 };
-	Get_UID_96bit(UID); // Unique device ID register (96 bits)
-	sprintf(DataChar, "UID: %08lx %08lx %08lx\r\n", UID[0], UID[1], UID[2]);
+	uint32_t myUID[3] = { 0 };
+	Get_UID_96bit(myUID); // Unique device ID register (96 bits)
+	sprintf(DataChar, "UID: %010lu %010lu %010lu\r\n", myUID[0], myUID[1], myUID[2]);
+	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+
+	uint32_t myRNG_u32 = HAL_RNG_GetRandomNumber(&hrng);
+	sprintf(DataChar, "rng: %010lu\r\n", myRNG_u32 );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
 	//initialize LoRa module
