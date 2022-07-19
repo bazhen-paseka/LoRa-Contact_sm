@@ -21,6 +21,7 @@
 	#include "rng.h"
 	#include "crc.h"
 	#include "LoRa-Contact_SM.h"
+	#include "Lora_local_config.h"
 /*
 **************************************************************************
 *							LOCAL DEFINES
@@ -72,8 +73,9 @@
 	SX1278_hw_t SX1278_hw;
 	SX1278_t 	SX1278;
 
+	#define	LORA_SIZE	80
 	int ret;
-	char buffer[64];
+	char buffer[LORA_SIZE];
 	int message;
 	int message_length;
 
@@ -237,34 +239,34 @@ void LoRa_Contact_Init (void){
 	sprintf(DataChar, " done.\r\n" );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
-#if (MASTER == 1)
-	ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
-	sprintf(DataChar, "mode Master=%d\r\n", ret);
-	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-#elif
-	ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
-	sprintf(DataChar, "mode Slave=%d\r\n", ret );
-	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-#endif
+	if  (MASTER == 1) {
+		ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
+		sprintf(DataChar, "mode Master=%d\r\n", ret);
+		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);\
+	} else {
+		ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
+		sprintf(DataChar, "mode Slave=%d\r\n", ret );
+		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+	}
 } //***************************************************************************
 
 void LoRa_Contact_Main (void){
-#if MASTER == 1
-	for (int box_number = 0; box_number < SLAVE_QNT; box_number++) {
-		if (ch_u32[box_number] == 1) {
-			ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
-			Command_button_pressed(box_number);
-			//LoraMain_TX();
-			ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
-			HAL_IWDG_Refresh(&hiwdg);
+	if (MASTER == 1) {
+		for (int box_number = 0; box_number < SLAVE_QNT; box_number++) {
+			if (ch_u32[box_number] == 1) {
+				ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
+				Command_button_pressed(box_number);
+				//LoraMain_TX();
+				ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
+				HAL_IWDG_Refresh(&hiwdg);
+			}
 		}
+		LoraMaster_RX();
+		HAL_IWDG_Refresh(&hiwdg);
+	} else {
+		LoraMain_RX();
+		HAL_IWDG_Refresh(&hiwdg);
 	}
-	LoraMaster_RX();
-	HAL_IWDG_Refresh(&hiwdg);
-#elif
-	LoraMain_RX();
-	HAL_IWDG_Refresh(&hiwdg);
-#endif
 } //***************************************************************************
 
 /***************************************************************************
@@ -340,7 +342,14 @@ void Slave_Answer(void){
 } //***************************************************************************
 
 void Command_button_pressed(int _box_number) {
-	message_length = sprintf(buffer, "BOX-%d", _box_number+1 );
+	//message_length = sprintf(buffer, "BOX-%d", _box_number+1 );
+
+	for (int i=0; i<(LORA_SIZE-1); i++) {
+		buffer[i] = (char)(i+40);
+	}
+	buffer[LORA_SIZE]='\0';
+	message_length = LORA_SIZE;
+
 	ret = SX1278_LoRaEntryTx ( &SX1278, message_length, 2000 ) ;
 	ret = SX1278_LoRaTxPacket( &SX1278, (uint8_t *) buffer, message_length, 2000 ) ;
 	sprintf(DataChar, "send: %s\r\n", buffer );
