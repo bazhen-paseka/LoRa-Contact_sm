@@ -20,6 +20,7 @@
 	#include <stdio.h>
 	#include <string.h>
 	#include "SX1278.h"
+	#include "aes.h"
 	#include "Lora_local_config.h"
 /*
 **************************************************************************
