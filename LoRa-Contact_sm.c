@@ -157,8 +157,36 @@ void LoRa_Contact_Init (void){
 	} else {
 		sprintf(DataChar, "CRC calc - Ok. \r\n" );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-	}
-	// 	CRC END
+	}	// 	CRC END
+
+	//	AES Start ****************************************************************************
+	uint32_t fw_buf[64]			= {0};
+	uint32_t fw_AES_u32[64]		= {0};
+	uint32_t fw_open_u32[64]	= {0};
+	/* шифруємо файл	*/
+	sprintf(DataChar,"4) AES_CBC_encrypt_buffer");
+	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+
+	memcpy((uint8_t*)&fw_open_u32, (uint8_t*)&fw_buf, 256);
+
+	/* За�?шифровываем �?читанный блок прошивки */
+//	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
+//	AES_CBC_encrypt_buffer(&my_AES, (uint8_t *)&fw_buf, 256 );
+	memcpy(fw_AES_u32, fw_buf, 256);
+
+	/* Ра�?шифровываем �?читанный блок прошивки */
+	uint32_t	fw_buf_test[64] = { 0 } ;
+	memcpy((uint8_t*)&fw_buf_test, (uint8_t*)&fw_buf, 256);
+
+//	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
+//	AES_CBC_decrypt_buffer(&my_AES, (uint8_t *)&fw_buf_test, 256);
+
+	/* порівнюємо зашифровані дані 2 */
+	for (int i=0; i<64; i++) {
+		sprintf(DataChar,"5) %d] %X %X\r\n", i , (int)fw_open_u32[i], (int)fw_buf_test[i]  ) ;
+		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+	}	//	AES END	*******************************************************************************
+
 
 	//initialize LoRa module
 	SX1278_hw.dio0.port		= DIO0_GPIO_Port;
