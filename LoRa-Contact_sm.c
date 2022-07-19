@@ -131,40 +131,40 @@ void LoRa_Contact_Init (void){
 	sprintf(DataChar, "CRC Start... \r\n" );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
-	__IO uint32_t uwCRCValue = 0;
-	#define CRC_BUFFER_SIZE    114
-
-	static const uint32_t CRCDataBuffer[ CRC_BUFFER_SIZE ] = {
-		0x00001021, 0x20423063, 0x408450a5, 0x60c670e7, 0x9129a14a, 0xb16bc18c,
-		0xd1ade1ce, 0xf1ef1231, 0x32732252, 0x52b54294, 0x72f762d6, 0x93398318,
-		0xa35ad3bd, 0xc39cf3ff, 0xe3de2462, 0x34430420, 0x64e674c7, 0x44a45485,
-		0xa56ab54b, 0x85289509, 0xf5cfc5ac, 0xd58d3653, 0x26721611, 0x063076d7,
-		0x569546b4, 0xb75ba77a, 0x97198738, 0xf7dfe7fe, 0xc7bc48c4, 0x58e56886,
-		0x78a70840, 0x18612802, 0xc9ccd9ed, 0xe98ef9af, 0x89489969, 0xa90ab92b,
-		0x4ad47ab7, 0x6a961a71, 0x0a503a33, 0x2a12dbfd, 0xfbbfeb9e, 0x9b798b58,
-		0xbb3bab1a, 0x6ca67c87, 0x5cc52c22, 0x3c030c60, 0x1c41edae, 0xfd8fcdec,
-		0xad2abd0b, 0x8d689d49, 0x7e976eb6, 0x5ed54ef4, 0x2e321e51, 0x0e70ff9f,
-		0xefbedfdd, 0xcffcbf1b, 0x9f598f78, 0x918881a9, 0xb1caa1eb, 0xd10cc12d,
-		0xe16f1080, 0x00a130c2, 0x20e35004, 0x40257046, 0x83b99398, 0xa3fbb3da,
-		0xc33dd31c, 0xe37ff35e, 0x129022f3, 0x32d24235, 0x52146277, 0x7256b5ea,
-		0x95a88589, 0xf56ee54f, 0xd52cc50d, 0x34e224c3, 0x04817466, 0x64475424,
-		0x4405a7db, 0xb7fa8799, 0xe75ff77e, 0xc71dd73c, 0x26d336f2, 0x069116b0,
-		0x76764615, 0x5634d94c, 0xc96df90e, 0xe92f99c8, 0xb98aa9ab, 0x58444865,
-		0x78066827, 0x18c008e1, 0x28a3cb7d, 0xdb5ceb3f, 0xfb1e8bf9, 0x9bd8abbb,
-		0x4a755a54, 0x6a377a16, 0x0af11ad0, 0x2ab33a92, 0xed0fdd6c, 0xcd4dbdaa,
-		0xad8b9de8, 0x8dc97c26, 0x5c644c45, 0x3ca22c83, 0x1ce00cc1, 0xef1fff3e,
-		0xdf7caf9b, 0xbfba8fd9, 0x9ff86e17, 0x7e364e55, 0x2e933eb2, 0x0ed11ef0
-	};
-
-	uwCRCValue = HAL_CRC_Accumulate(&hcrc, (uint32_t *)CRCDataBuffer, CRC_BUFFER_SIZE);
-	uint32_t uwExpectedCRCValue = 0x379E9F06;
-	if(uwCRCValue != uwExpectedCRCValue) {
-		sprintf(DataChar, "CRC calc - ERROR. \r\n" );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-	} else {
-		sprintf(DataChar, "CRC calc - Ok. \r\n" );
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-	}
+//	__IO uint32_t uwCRCValue = 0;
+//	#define CRC_BUFFER_SIZE    114
+//
+//	static const uint32_t CRCDataBuffer[ CRC_BUFFER_SIZE ] = {
+//		0x00001021, 0x20423063, 0x408450a5, 0x60c670e7, 0x9129a14a, 0xb16bc18c,
+//		0xd1ade1ce, 0xf1ef1231, 0x32732252, 0x52b54294, 0x72f762d6, 0x93398318,
+//		0xa35ad3bd, 0xc39cf3ff, 0xe3de2462, 0x34430420, 0x64e674c7, 0x44a45485,
+//		0xa56ab54b, 0x85289509, 0xf5cfc5ac, 0xd58d3653, 0x26721611, 0x063076d7,
+//		0x569546b4, 0xb75ba77a, 0x97198738, 0xf7dfe7fe, 0xc7bc48c4, 0x58e56886,
+//		0x78a70840, 0x18612802, 0xc9ccd9ed, 0xe98ef9af, 0x89489969, 0xa90ab92b,
+//		0x4ad47ab7, 0x6a961a71, 0x0a503a33, 0x2a12dbfd, 0xfbbfeb9e, 0x9b798b58,
+//		0xbb3bab1a, 0x6ca67c87, 0x5cc52c22, 0x3c030c60, 0x1c41edae, 0xfd8fcdec,
+//		0xad2abd0b, 0x8d689d49, 0x7e976eb6, 0x5ed54ef4, 0x2e321e51, 0x0e70ff9f,
+//		0xefbedfdd, 0xcffcbf1b, 0x9f598f78, 0x918881a9, 0xb1caa1eb, 0xd10cc12d,
+//		0xe16f1080, 0x00a130c2, 0x20e35004, 0x40257046, 0x83b99398, 0xa3fbb3da,
+//		0xc33dd31c, 0xe37ff35e, 0x129022f3, 0x32d24235, 0x52146277, 0x7256b5ea,
+//		0x95a88589, 0xf56ee54f, 0xd52cc50d, 0x34e224c3, 0x04817466, 0x64475424,
+//		0x4405a7db, 0xb7fa8799, 0xe75ff77e, 0xc71dd73c, 0x26d336f2, 0x069116b0,
+//		0x76764615, 0x5634d94c, 0xc96df90e, 0xe92f99c8, 0xb98aa9ab, 0x58444865,
+//		0x78066827, 0x18c008e1, 0x28a3cb7d, 0xdb5ceb3f, 0xfb1e8bf9, 0x9bd8abbb,
+//		0x4a755a54, 0x6a377a16, 0x0af11ad0, 0x2ab33a92, 0xed0fdd6c, 0xcd4dbdaa,
+//		0xad8b9de8, 0x8dc97c26, 0x5c644c45, 0x3ca22c83, 0x1ce00cc1, 0xef1fff3e,
+//		0xdf7caf9b, 0xbfba8fd9, 0x9ff86e17, 0x7e364e55, 0x2e933eb2, 0x0ed11ef0
+//	};
+//
+//	uwCRCValue = HAL_CRC_Accumulate(&hcrc, (uint32_t *)CRCDataBuffer, CRC_BUFFER_SIZE);
+//	uint32_t uwExpectedCRCValue = 0x379E9F06;
+//	if(uwCRCValue != uwExpectedCRCValue) {
+//		sprintf(DataChar, "CRC calc - ERROR. \r\n" );
+//		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//	} else {
+//		sprintf(DataChar, "CRC calc - Ok. \r\n" );
+//		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//	}
 
 //// AES Start ****************************************************************************
 //	uint32_t	AES_Data_u32[64]	= { 0 } ;
@@ -360,21 +360,41 @@ void Slave_Answer(void){
 void Command_button_pressed(int _box_number) {
 	//message_length = sprintf(buffer, "BOX-%d", _box_number+1 );
 
+	uint8_t buffer_tx_u8[LORA_SIZE] = { 0 };
 	for (int i=0; i<(LORA_SIZE-1); i++) {
-		buffer[i] = (char)(i+40);
+		buffer_tx_u8[i] = (char)(i+40);
 	}
-	buffer[LORA_SIZE]='\0';
+	buffer_tx_u8[LORA_SIZE]='\0';
 	message_length = LORA_SIZE;
 
-	struct 		AES_ctx 			my_AES;
-	uint8_t AES_KEY[16] = {0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF};
-	uint8_t AES_IV[16]  = {0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA};
-	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
-	AES_CBC_encrypt_buffer(&my_AES, (uint8_t *)&buffer, LORA_SIZE );		//	encryption
+//	struct 		AES_ctx 			my_AES;
+//	uint8_t AES_KEY[16] = {0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF};
+//	uint8_t AES_IV[16]  = {0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA};
+//	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
+//	AES_CBC_encrypt_buffer(&my_AES, (uint8_t *)&buffer, LORA_SIZE );		//	encryption
 
-	ret = SX1278_LoRaEntryTx ( &SX1278, message_length, 2000 ) ;
-	ret = SX1278_LoRaTxPacket( &SX1278, (uint8_t *) buffer, message_length, 2000 ) ;
-	sprintf(DataChar, "send: %s\r\n", buffer );
+	HAL_CRC_DeInit(&hcrc);
+	HAL_CRC_Init(&hcrc);
+
+	__IO uint32_t CRC_Value_u32 = 0;
+	CRC_Value_u32 = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&buffer_tx_u8, LORA_SIZE/4 );
+	sprintf(DataChar, "CRC: %08lX (397FD0B6)\r\n", CRC_Value_u32 );
+	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+	char bufferCRC[90] = {0};
+
+	sprintf(bufferCRC, "%s%lX", buffer_tx_u8, CRC_Value_u32 );
+
+//	memcpy((uint8_t*)&bufferCRC, (uint8_t*)&buffer_tx_u8, LORA_SIZE);
+//	bufferCRC[80] = (uint8_t)((0x000000FF )&( CRC_Value_u32    )) ;
+//	bufferCRC[81] = (uint8_t)((  0x0000FF )&( CRC_Value_u32>>4 )) ;
+//	bufferCRC[82] = (uint8_t)((    0x00FF )&( CRC_Value_u32>>8 )) ;
+//	bufferCRC[83] = (uint8_t)((      0xFF )&( CRC_Value_u32>>12)) ;
+//	bufferCRC[84] = '\0';
+
+
+	ret = SX1278_LoRaEntryTx ( &SX1278, 88, 2000 ) ;
+	ret = SX1278_LoRaTxPacket( &SX1278, (uint8_t *) bufferCRC, 88, 2000 ) ;
+	sprintf(DataChar, "send: %s;\r\n", bufferCRC );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 	HAL_Delay(TX_TIME);
 	ch_u32[_box_number] = 0 ;
