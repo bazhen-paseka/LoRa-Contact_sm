@@ -18,7 +18,9 @@
 	#include "spi.h"
 	#include "usart.h"
 	#include "iwdg.h"
+#ifdef L053
 	#include "rng.h"
+#endif
 	#include "crc.h"
 	#include "LoRa-Contact_SM.h"
 	#include "Lora_local_config.h"
@@ -118,9 +120,11 @@ void LoRa_Contact_Init (void){
 	sprintf(DataChar, "UID: %010lu %010lu %010lu\r\n", myUID[0], myUID[1], myUID[2]);
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
+#ifdef L053
 	uint32_t myRNG_u32 = HAL_RNG_GetRandomNumber(&hrng);
 	sprintf(DataChar, "rng: %010lu\r\n", myRNG_u32 );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+#endif
 
 	//CRC Start
 	sprintf(DataChar, "CRC Start... \r\n" );
@@ -184,9 +188,11 @@ void LoRa_Contact_Init (void){
 	sprintf(DataChar,"\r\n" );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
+#ifdef L053
 	for (int i=0; i<16; i++) {
 		AES_IV[i] = (uint8_t)((0x0000000000001111)&(HAL_RNG_GetRandomNumber(&hrng)));	//	Create random AES_IV
 	}
+#endif
 
 	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
 	AES_CBC_encrypt_buffer(&my_AES, (uint8_t *)&AES_Data_u32, 256 );		//	encryption
@@ -239,19 +245,19 @@ void LoRa_Contact_Init (void){
 	sprintf(DataChar, " done.\r\n" );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
-	if  (MASTER == 1) {
+#if (MASTER == 1)
 		ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
 		sprintf(DataChar, "mode Master=%d\r\n", ret);
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);\
-	} else {
+		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+#else
 		ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
 		sprintf(DataChar, "mode Slave=%d\r\n", ret );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-	}
+#endif
 } //***************************************************************************
 
 void LoRa_Contact_Main (void){
-	if (MASTER == 1) {
+#if (MASTER == 1)
 		for (int box_number = 0; box_number < SLAVE_QNT; box_number++) {
 			if (ch_u32[box_number] == 1) {
 				ret = SX1278_LoRaEntryTx(&SX1278, 16, 2000);
@@ -263,10 +269,10 @@ void LoRa_Contact_Main (void){
 		}
 		LoraMaster_RX();
 		HAL_IWDG_Refresh(&hiwdg);
-	} else {
+#else
 		LoraMain_RX();
 		HAL_IWDG_Refresh(&hiwdg);
-	}
+#endif
 } //***************************************************************************
 
 /***************************************************************************
