@@ -312,8 +312,17 @@ void LoraMain_RX(void) {
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 	if (ret > 0) {
 		SX1278_read(&SX1278, (uint8_t *) buffer, ret);
-			sprintf(DataChar, "\t\"%s\"", buffer );
+		sprintf(DataChar, "\t\"%s\"", buffer );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+
+		struct AES_ctx	my_AES;
+		uint8_t AES_KEY[16] = {0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF};
+		uint8_t AES_IV[16]  = {0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA};
+		AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
+		AES_CBC_decrypt_buffer(&my_AES, (uint8_t *)&buffer, LORA_SIZE);		//	decryption:
+		sprintf(DataChar, "\r\ndecryption:\r\n%s\r\n", buffer );
+		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+
 		if (buffer[4] == SLAVE_NUMBER + '0' ) {
 			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
@@ -360,15 +369,6 @@ void Command_button_pressed(int _box_number) {
 	struct 		AES_ctx 			my_AES;
 	uint8_t AES_KEY[16] = {0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF};
 	uint8_t AES_IV[16]  = {0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA};
-	//uint8_t AES_IV[16]  = { 0 };
-
-
-//	#ifdef L053
-//		for (int i=0; i<16; i++) {
-//			AES_IV[i] = (uint8_t)((0x0000000000001111)&(HAL_RNG_GetRandomNumber(&hrng)));	//	Create random AES_IV
-//		}
-//	#endif
-
 	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
 	AES_CBC_encrypt_buffer(&my_AES, (uint8_t *)&buffer, LORA_SIZE );		//	encryption
 
