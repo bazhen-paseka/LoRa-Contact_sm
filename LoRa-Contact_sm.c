@@ -157,38 +157,64 @@ void LoRa_Contact_Init (void){
 	} else {
 		sprintf(DataChar, "CRC calc - Ok. \r\n" );
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-	}	// 	CRC END
+	}
 
-	//	AES Start ****************************************************************************
-	uint32_t fw_buf[64]			= {0};
-	uint32_t fw_AES_u32[64]		= {0};
-	uint32_t fw_open_u32[64]	= {0};
-	/* шифруємо файл	*/
-	sprintf(DataChar,"4) AES_CBC_encrypt_buffer");
+// AES Start ****************************************************************************
+	uint32_t	AES_Data_u32[64]	= { 0 } ;
+	struct 		AES_ctx 			my_AES;
+	uint8_t AES_KEY[16] = {0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF};
+	//static const uint8_t AES_IV[16]  = {0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA};
+	uint8_t AES_IV[16]  = { 0 };
+
+	for (int i=0; i<64; i++) {
+		AES_Data_u32[i] = 1111000000 + i ;	//	generate New data
+	}
+
+	for (int i=0; i<64; i++) {
+		if (i%8 == 0) {
+			sprintf(DataChar,"\r\n");
+			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+		}
+		sprintf(DataChar," %010lu ", AES_Data_u32[i] ) ;	// print new data
+		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+
+	}
+	sprintf(DataChar,"\r\n" );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
-	memcpy((uint8_t*)&fw_open_u32, (uint8_t*)&fw_buf, 256);
+	for (int i=0; i<16; i++) {
+		AES_IV[i] = (uint8_t)((0x0000000000001111)&(HAL_RNG_GetRandomNumber(&hrng)));	//	Create random AES_IV
+	}
 
-	/* За�?шифровываем �?читанный блок прошивки */
-//	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
-//	AES_CBC_encrypt_buffer(&my_AES, (uint8_t *)&fw_buf, 256 );
-	memcpy(fw_AES_u32, fw_buf, 256);
+	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
+	AES_CBC_encrypt_buffer(&my_AES, (uint8_t *)&AES_Data_u32, 256 );		//	encryption
 
-	/* Ра�?шифровываем �?читанный блок прошивки */
-	uint32_t	fw_buf_test[64] = { 0 } ;
-	memcpy((uint8_t*)&fw_buf_test, (uint8_t*)&fw_buf, 256);
-
-//	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
-//	AES_CBC_decrypt_buffer(&my_AES, (uint8_t *)&fw_buf_test, 256);
-
-	/* порівнюємо зашифровані дані 2 */
 	for (int i=0; i<64; i++) {
-		sprintf(DataChar,"5) %d] %X %X\r\n", i , (int)fw_open_u32[i], (int)fw_buf_test[i]  ) ;
+		if (i%8 == 0) {
+			sprintf(DataChar,"\r\n");
+			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+		}
+		sprintf(DataChar," %010lu ", AES_Data_u32[i]  ) ;
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-	}	//	AES END	*******************************************************************************
+	}
+	sprintf(DataChar,"\r\n" );
+	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
+	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
+	AES_CBC_decrypt_buffer(&my_AES, (uint8_t *)&AES_Data_u32, 256);		//	decryption:
 
-	//initialize LoRa module
+	for (int i=0; i<64; i++) {
+		if (i%8 == 0) {
+			sprintf(DataChar,"\r\n");
+			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+		}
+		sprintf(DataChar," %010lu ", AES_Data_u32[i] ) ;	// print decryption data
+		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+	}
+	sprintf(DataChar,"\r\n" );
+	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+
+// initialize LoRa module
 	SX1278_hw.dio0.port		= DIO0_GPIO_Port;
 	SX1278_hw.dio0.pin 		= DIO0_Pin;
 	SX1278_hw.nss.port 		= NSS_GPIO_Port;
@@ -220,7 +246,6 @@ void LoRa_Contact_Init (void){
 	sprintf(DataChar, "mode Slave=%d\r\n", ret );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 #endif
-
 } //***************************************************************************
 
 void LoRa_Contact_Main (void){
