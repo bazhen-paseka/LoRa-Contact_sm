@@ -18,6 +18,7 @@
 	#include "spi.h"
 	#include "usart.h"
 	#include "iwdg.h"
+	#include "Lora_local_config.h"
 #ifdef L053
 	#include "rng.h"
 #endif
@@ -165,62 +166,62 @@ void LoRa_Contact_Init (void){
 		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 	}
 
-// AES Start ****************************************************************************
-	uint32_t	AES_Data_u32[64]	= { 0 } ;
-	struct 		AES_ctx 			my_AES;
-	uint8_t AES_KEY[16] = {0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF};
-	//static const uint8_t AES_IV[16]  = {0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA};
-	uint8_t AES_IV[16]  = { 0 };
-
-	for (int i=0; i<64; i++) {
-		AES_Data_u32[i] = 1111000000 + i ;	//	generate New data
-	}
-
-	for (int i=0; i<64; i++) {
-		if (i%8 == 0) {
-			sprintf(DataChar,"\r\n");
-			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		}
-		sprintf(DataChar," %010lu ", AES_Data_u32[i] ) ;	// print new data
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-
-	}
-	sprintf(DataChar,"\r\n" );
-	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-
-#ifdef L053
-	for (int i=0; i<16; i++) {
-		AES_IV[i] = (uint8_t)((0x0000000000001111)&(HAL_RNG_GetRandomNumber(&hrng)));	//	Create random AES_IV
-	}
-#endif
-
-	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
-	AES_CBC_encrypt_buffer(&my_AES, (uint8_t *)&AES_Data_u32, 256 );		//	encryption
-
-	for (int i=0; i<64; i++) {
-		if (i%8 == 0) {
-			sprintf(DataChar,"\r\n");
-			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		}
-		sprintf(DataChar," %010lu ", AES_Data_u32[i]  ) ;
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-	}
-	sprintf(DataChar,"\r\n" );
-	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-
-	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
-	AES_CBC_decrypt_buffer(&my_AES, (uint8_t *)&AES_Data_u32, 256);		//	decryption:
-
-	for (int i=0; i<64; i++) {
-		if (i%8 == 0) {
-			sprintf(DataChar,"\r\n");
-			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-		}
-		sprintf(DataChar," %010lu ", AES_Data_u32[i] ) ;	// print decryption data
-		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
-	}
-	sprintf(DataChar,"\r\n" );
-	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//// AES Start ****************************************************************************
+//	uint32_t	AES_Data_u32[64]	= { 0 } ;
+//	struct 		AES_ctx 			my_AES;
+//	uint8_t AES_KEY[16] = {0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF};
+//	//static const uint8_t AES_IV[16]  = {0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA};
+//	uint8_t AES_IV[16]  = { 0 };
+//
+//	for (int i=0; i<64; i++) {
+//		AES_Data_u32[i] = 1111000000 + i ;	//	generate New data
+//	}
+//
+//	for (int i=0; i<64; i++) {
+//		if (i%8 == 0) {
+//			sprintf(DataChar,"\r\n");
+//			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//		}
+//		sprintf(DataChar," %010lu ", AES_Data_u32[i] ) ;	// print new data
+//		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//
+//	}
+//	sprintf(DataChar,"\r\n" );
+//	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//
+//#ifdef L053
+//	for (int i=0; i<16; i++) {
+//		AES_IV[i] = (uint8_t)((0x0000000000001111)&(HAL_RNG_GetRandomNumber(&hrng)));	//	Create random AES_IV
+//	}
+//#endif
+//
+//	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
+//	AES_CBC_encrypt_buffer(&my_AES, (uint8_t *)&AES_Data_u32, 256 );		//	encryption
+//
+//	for (int i=0; i<64; i++) {
+//		if (i%8 == 0) {
+//			sprintf(DataChar,"\r\n");
+//			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//		}
+//		sprintf(DataChar," %010lu ", AES_Data_u32[i]  ) ;
+//		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//	}
+//	sprintf(DataChar,"\r\n" );
+//	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//
+//	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
+//	AES_CBC_decrypt_buffer(&my_AES, (uint8_t *)&AES_Data_u32, 256);		//	decryption:
+//
+//	for (int i=0; i<64; i++) {
+//		if (i%8 == 0) {
+//			sprintf(DataChar,"\r\n");
+//			HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//		}
+//		sprintf(DataChar," %010lu ", AES_Data_u32[i] ) ;	// print decryption data
+//		HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
+//	}
+//	sprintf(DataChar,"\r\n" );
+//	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 
 // initialize LoRa module
 	SX1278_hw.dio0.port		= DIO0_GPIO_Port;
@@ -355,6 +356,21 @@ void Command_button_pressed(int _box_number) {
 	}
 	buffer[LORA_SIZE]='\0';
 	message_length = LORA_SIZE;
+
+	struct 		AES_ctx 			my_AES;
+	uint8_t AES_KEY[16] = {0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF, 0xAF};
+	uint8_t AES_IV[16]  = {0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA};
+	//uint8_t AES_IV[16]  = { 0 };
+
+
+//	#ifdef L053
+//		for (int i=0; i<16; i++) {
+//			AES_IV[i] = (uint8_t)((0x0000000000001111)&(HAL_RNG_GetRandomNumber(&hrng)));	//	Create random AES_IV
+//		}
+//	#endif
+
+	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
+	AES_CBC_encrypt_buffer(&my_AES, (uint8_t *)&buffer, LORA_SIZE );		//	encryption
 
 	ret = SX1278_LoRaEntryTx ( &SX1278, message_length, 2000 ) ;
 	ret = SX1278_LoRaTxPacket( &SX1278, (uint8_t *) buffer, message_length, 2000 ) ;
