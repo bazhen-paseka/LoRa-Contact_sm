@@ -417,11 +417,11 @@ void Command_button_pressed(int _box_number) {
 //	AES_init_ctx_iv(&my_AES, AES_KEY, AES_IV);
 //	AES_CBC_encrypt_buffer(&my_AES, (uint8_t *)&buffer, LORA_SIZE );		//	encryption
 
-	HAL_CRC_DeInit(&hcrc);
-	HAL_CRC_Init(&hcrc);
+//	HAL_CRC_DeInit(&hcrc);
+//	HAL_CRC_Init(&hcrc);
 
 	__IO uint32_t CRC_Value_u32 = 0;
-	CRC_Value_u32 = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&buffer_tx_u8, LORA_SIZE/4 );
+	CRC_Value_u32 = HAL_CRC_Calculate(&hcrc, (uint32_t *)&buffer_tx_u8, LORA_SIZE/4 );
 	sprintf(DataChar, "CRC: %08lX (397FD0B6)\r\n", CRC_Value_u32 );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 	char bufferCRC[90] = {0};
@@ -438,7 +438,7 @@ void Command_button_pressed(int _box_number) {
 
 	ret = SX1278_LoRaEntryTx ( &SX1278, 88, 2000 ) ;
 	ret = SX1278_LoRaTxPacket( &SX1278, (uint8_t *) bufferCRC, 88, 2000 ) ;
-	sprintf(DataChar, "send: %s;\r\n", bufferCRC );
+	sprintf(DataChar, "send: %s\r\n", bufferCRC );
 	HAL_UART_Transmit(&huart1, (uint8_t *)DataChar, strlen(DataChar), 100);
 	HAL_Delay(TX_TIME);
 	ch_u32[_box_number] = 0 ;
